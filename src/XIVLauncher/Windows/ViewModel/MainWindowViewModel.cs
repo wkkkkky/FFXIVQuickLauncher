@@ -351,6 +351,18 @@ namespace XIVLauncher.Windows.ViewModel
                     }
                 }
             }
+            catch (SteamException sex)
+            {
+                Log.Error(sex, "Steam failed");
+                var message = string.Format(Loc.Localize("LoginSteamIssue",
+                    "Could not authenticate with Steam. Please make sure that Steam is running and that you are logged in with the account tied to your SE ID.\n\nContext:{0}"), sex.Message);
+
+                CustomMessageBox.Show(message,
+                    Loc.Localize("LoginNoOauthTitle", "Login issue"),
+                    MessageBoxButton.OK, MessageBoxImage.Error);
+
+                Reactivate();
+            }
             catch (InvalidResponseException ex)
             {
                 Log.Error(ex, "Received invalid server response");
@@ -507,7 +519,7 @@ namespace XIVLauncher.Windows.ViewModel
 
             // We won't do any sanity checks here anymore, since that should be handled in StartLogin
             var gameProcess = Launcher.LaunchGame(loginResult.UniqueId, loginResult.OauthLogin.Region,
-                    loginResult.OauthLogin.MaxExpansion, App.Settings.SteamIntegrationEnabled,
+                    loginResult.OauthLogin.MaxExpansion,
                     isSteam, App.Settings.AdditionalLaunchArgs, App.Settings.GamePath, App.Settings.IsDx11, App.Settings.Language.GetValueOrDefault(ClientLanguage.English), App.Settings.EncryptArguments.GetValueOrDefault(false),
                     process => {
                         if (App.Settings.InGameAddonLoadMethod == DalamudLoadMethod.EntryPoint)
@@ -574,12 +586,24 @@ namespace XIVLauncher.Windows.ViewModel
                     Thread.Sleep(100);
                 }
 
-                Log.Information("Game has exited.");
+                Log.Verbose("Game has exited");
 
                 if (addonMgr.IsRunning)
                     addonMgr.StopAddons();
 
                 CleanUp();
+
+                try
+                {
+                    if (Steamworks.SteamClient.IsValid)
+                    {
+                        Steamworks.SteamClient.Shutdown();
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Log.Error(ex, "Could not shut down Steam");
+                }
 
                 Environment.Exit(0);
             });
@@ -654,7 +678,7 @@ namespace XIVLauncher.Windows.ViewModel
                 {
                     App.Settings.PatchPath = null;
                 }
-                
+
                 App.Settings.PatchPath ??= new DirectoryInfo(Path.Combine(Paths.RoamingPath, "patches"));
 
                 Game.Patch.PatchList.PatchListEntry[] bootPatches = null;

@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
@@ -9,18 +8,13 @@ using System.Net.Http;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.RegularExpressions;
-using System.Threading;
 using System.Threading.Tasks;
-using System.Windows;
-using CheapLoc;
 using Serilog;
-using SteamworksSharp;
-using SteamworksSharp.Native;
+using Steamworks;
 using XIVLauncher.Cache;
 using XIVLauncher.Encryption;
 using XIVLauncher.Game.Patch.PatchList;
 using XIVLauncher.PatchInstaller;
-using XIVLauncher.Windows;
 
 namespace XIVLauncher.Game
 {
@@ -84,6 +78,49 @@ namespace XIVLauncher.Game
 
             Log.Information($"XivGame::Login(steamServiceAccount:{isSteamServiceAccount}, cache:{useCache})");
 
+            byte[] steamTicket = null;
+            if (isSteamServiceAccount)
+            {
+                try
+                {
+                    SteamClient.Init(STEAM_APP_ID);
+                }
+                catch (Exception ex)
+                {
+                    Log.Error(ex, "Could not initialize Steam");
+                    throw new SteamException("SteamAPI_Init() failed.", ex);
+                }
+
+                if (!SteamClient.IsValid)
+                {
+                    throw new SteamException("SteamClient was not valid.");
+                }
+
+                if (!SteamClient.IsLoggedOn)
+                {
+                    throw new SteamException("Not logged into Steam. Please log in and try again.");
+                }
+
+                if (SteamClient.State == FriendState.Offline)
+                {
+                    throw new SteamException("Steam is set to offline mode. Please restart Steam.");
+                }
+
+                try
+                {
+                    steamTicket = await SteamUser.RequestEncryptedAppTicketAsync();
+                }
+                catch (Exception ex)
+                {
+                    throw new SteamException("Could not request encrypted app ticket.", ex);
+                }
+
+                if (steamTicket == null)
+                {
+                    throw new SteamException("Steam app ticket was null.");
+                }
+            }
+
             if (!useCache || !UniqueIdCache.Instance.HasValidCache(userName))
             {
                 Log.Information("Cache is invalid or disabled, logging in normally.");
@@ -139,26 +176,12 @@ namespace XIVLauncher.Game
             };
         }
 
-        public static Process LaunchGame(string sessionId, int region, int expansionLevel,
-            bool isSteamIntegrationEnabled, bool isSteamServiceAccount, string additionalArguments,
+        public static Process LaunchGame(string sessionId, int region, int expansionLevel, bool isSteamServiceAccount, string additionalArguments,
             DirectoryInfo gamePath, bool isDx11, ClientLanguage language,
             bool encryptArguments, Action<Process> beforeResume)
         {
             Log.Information(
-                $"XivGame::LaunchGame(steamIntegration:{isSteamIntegrationEnabled}, steamServiceAccount:{isSteamServiceAccount}, args:{additionalArguments})");
-
-            if (isSteamIntegrationEnabled)
-                try
-                {
-                    SteamNative.Initialize();
-
-                    if (SteamApi.IsSteamRunning() && SteamApi.Initialize(STEAM_APP_ID))
-                        Log.Information("Steam initialized.");
-                }
-                catch (Exception ex)
-                {
-                    Log.Error(ex, "Could not initialize Steam.");
-                }
+                $"XivGame::LaunchGame(steamServiceAccount:{isSteamServiceAccount}, args:{additionalArguments})");
 
             var exePath = Path.Combine(gamePath.FullName, "game", "ffxiv_dx11.exe");
             if (!isDx11)
@@ -199,19 +222,6 @@ namespace XIVLauncher.Game
                 ? argumentBuilder.BuildEncrypted()
                 : argumentBuilder.Build();
             var game = NativeAclFix.LaunchGame(workingDir, exePath, arguments, environment, beforeResume);
-
-            if (isSteamIntegrationEnabled)
-            {
-                try
-                {
-                    SteamApi.Uninitialize();
-                    SteamNative.Uninitialize();
-                }
-                catch (Exception ex)
-                {
-                    Log.Error(ex, "Could not uninitialize Steam.");
-                }
-            }
 
             return game;
         }

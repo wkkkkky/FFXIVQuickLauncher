@@ -98,7 +98,6 @@ namespace XIVLauncher.Support
                 DalamudEnabled = App.Settings.InGameAddonEnabled,
                 DalamudLoadMethod = App.Settings.InGameAddonLoadMethod.GetValueOrDefault(),
                 DalamudInjectionDelay = App.Settings.DalamudInjectionDelayMs,
-                SteamIntegration = App.Settings.SteamIntegrationEnabled,
                 EncryptArguments = App.Settings.EncryptArguments.GetValueOrDefault(true),
                 LauncherVersion = Util.GetAssemblyVersion(),
                 LauncherHash = Util.GetGitHash(),
