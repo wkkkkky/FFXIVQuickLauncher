@@ -75,10 +75,6 @@
   </ItemGroup>
 
   <!-- SteamWorksSharp natives -->
-  <ItemGroup>
-    <EmbeddedResource Include="SteamWorksSharp\Native\Windows_x86\steam_api.dll" />
-    <EmbeddedResource Include="SteamWorksSharp\Native\Windows_x64\steam_api64.dll" />
-  </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="AdysTech.CredentialManager" Version="1.8.0" />
@@ -87,6 +83,7 @@
     <PackageReference Include="Downloader" Version="2.2.8" />
     <PackageReference Include="Dragablz" Version="0.0.3.203" />
     <PackageReference Include="Extended.Wpf.Toolkit" Version="3.5.0" />
+    <PackageReference Include="Facepunch.Steamworks" Version="2.3.3" />
     <PackageReference Include="MaterialDesignThemes" Version="2.5.1" />
     <PackageReference Include="Microsoft.CSharp" Version="4.5.0" />
     <PackageReference Include="Microsoft.WindowsAPICodePack-Shell" Version="1.1.0" />
