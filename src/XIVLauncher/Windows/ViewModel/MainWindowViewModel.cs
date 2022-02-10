@@ -355,7 +355,7 @@ namespace XIVLauncher.Windows.ViewModel
             {
                 Log.Error(sex, "Steam failed");
                 var message = string.Format(Loc.Localize("LoginSteamIssue",
-                    "Could not authenticate with Steam. Please make sure that Steam is running and that you are logged in with the account tied to your SE ID.\n\nContext:{0}"), sex.Message);
+                    "Could not authenticate with Steam. Please make sure that Steam is running and that you are logged in with the account tied to your SE ID.\n\nContext: {0}"), sex.Message);
 
                 CustomMessageBox.Show(message,
                     Loc.Localize("LoginNoOauthTitle", "Login issue"),

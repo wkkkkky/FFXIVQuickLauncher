@@ -117,7 +117,7 @@ namespace XIVLauncher.Game
 
                 if (steamTicket == null)
                 {
-                    throw new SteamException("Steam app ticket was null.");
+                    throw new SteamException("Encrypted app ticket was null.");
                 }
             }
 
